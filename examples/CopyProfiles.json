@@ -30,11 +30,11 @@
     }, {
       "enabled" : true,
       "location" : 6,
-      "match" : "^Authorization: Bearer ([^\\n]+)",
-      "replace" : "Authorization: Bearer [...REDACTED...]",
+      "match" : "^Authorization: (Bearer|Basic) ([^\\n]+)",
+      "replace" : "Authorization: $1 [...REDACTED...]",
       "regex" : true,
       "caseSensitive" : false,
-      "comment" : "Redact Bearer Token"
+      "comment" : "Redact Bearer or Basic Token"
     } ]
   },
   "responseRules" : {
@@ -104,11 +104,11 @@
     }, {
       "enabled" : true,
       "location" : 6,
-      "match" : "^Authorization: Bearer ([^\\n]+)",
-      "replace" : "Authorization: Bearer [...REDACTED...]",
+      "match" : "^Authorization: (Bearer|Basic) ([^\\n]+)",
+      "replace" : "Authorization: $1 [...REDACTED...]",
       "regex" : true,
       "caseSensitive" : false,
-      "comment" : "Redact Bearer Token"
+      "comment" : "Redact Basic or Bearer Token"
     } ]
   },
   "responseRules" : {
@@ -139,93 +139,93 @@
     } ]
   }
 }, {
-	"name" : "Default - Truncate Response",
-	"updateRequestContentLength" : false,
-	"updateResponseContentLength" : false,
-	"requestRules" : {
-	  "data" : [ {
-		"enabled" : true,
-		"location" : 7,
-		"match" : "^Sec-(.*)",
-		"replace" : "",
-		"regex" : true,
-		"caseSensitive" : false,
-		"comment" : "Removes headers that start with Sec-"
-	  }, {
-		"enabled" : true,
-		"location" : 7,
-		"match" : "^Accept-(Language|Encoding).*",
-		"replace" : "",
-		"regex" : true,
-		"caseSensitive" : false,
-		"comment" : "Removes headers that start with Accept-Language|Encoding"
-	  }, {
-		"enabled" : true,
-		"location" : 6,
-		"match" : "^Cookie:.*",
-		"replace" : "Cookie: [...TRUNCATED...]",
-		"regex" : true,
-		"caseSensitive" : false,
-		"comment" : "Truncates all cookies."
-	  }, {
-		"enabled" : true,
-		"location" : 6,
-		"match" : "^Authorization: Bearer ([^\\n]+)",
-		"replace" : "Authorization: Bearer [...REDACTED...]",
-		"regex" : true,
-		"caseSensitive" : false,
-		"comment" : "Redact Bearer Token"
-	  } ]
-	},
-	"responseRules" : {
-	  "data" : [ {
-		"enabled" : true,
-		"location" : 3,
-		"match" : "^Set-Cookie:.*",
-		"replace" : "Set-Cookie: [...TRUNCATED...]",
-		"regex" : true,
-		"caseSensitive" : false,
-		"comment" : "Truncates all cookies."
-	  }, {
-		"enabled" : true,
-		"location" : 4,
-		"match" : "^Server-.*",
-		"replace" : "",
-		"regex" : true,
-		"caseSensitive" : false,
-		"comment" : ""
-	  }, {
-		"enabled" : true,
-		"location" : 4,
-		"match" : "Accept-CH",
-		"replace" : "",
-		"regex" : false,
-		"caseSensitive" : false,
-		"comment" : ""
-	  }, {
-		"enabled" : true,
-		"location" : 4,
-		"match" : "^x-azure.*",
-		"replace" : "",
-		"regex" : true,
-		"caseSensitive" : false,
-		"comment" : ""
-	  }, {
-		"enabled" : true,
-		"location" : 2,
-		"match" : "(Set\\-Cookie: \\[\\.\\.\\.TRUNCATED\\.\\.\\.\\]([\\r\\n]*))+",
-		"replace" : "Set-Cookie: [...TRUNCATED...]$2",
-		"regex" : true,
-		"caseSensitive" : false,
-		"comment" : "Remove duplicated Set-Cookie headers."
-	  }, {
-		"enabled" : true,
-		"location" : 6,
-		"match" : "^(.{0,200}).*$",
-		"replace" : "$1[...TRUNCATED...]",
-		"regex" : true,
-		"caseSensitive" : false,
-		"comment" : "Truncate Long Responses"
-	  } ]
-	}
-  } ]
+  "name" : "Default - Truncate Response",
+  "updateRequestContentLength" : false,
+  "updateResponseContentLength" : false,
+  "requestRules" : {
+    "data" : [ {
+      "enabled" : true,
+      "location" : 7,
+      "match" : "^Sec-(.*)",
+      "replace" : "",
+      "regex" : true,
+      "caseSensitive" : false,
+      "comment" : "Removes headers that start with Sec-"
+    }, {
+      "enabled" : true,
+      "location" : 7,
+      "match" : "^Accept-(Language|Encoding).*",
+      "replace" : "",
+      "regex" : true,
+      "caseSensitive" : false,
+      "comment" : "Removes headers that start with Accept-Language|Encoding"
+    }, {
+      "enabled" : true,
+      "location" : 6,
+      "match" : "^Cookie:.*",
+      "replace" : "Cookie: [...TRUNCATED...]",
+      "regex" : true,
+      "caseSensitive" : false,
+      "comment" : "Truncates all cookies."
+    }, {
+      "enabled" : true,
+      "location" : 6,
+      "match" : "^Authorization: (Bearer|Basic) ([^\\n]+)",
+      "replace" : "Authorization: $1 [...REDACTED...]",
+      "regex" : true,
+      "caseSensitive" : false,
+      "comment" : "Redact Basic or Bearer Token"
+    } ]
+  },
+  "responseRules" : {
+    "data" : [ {
+      "enabled" : true,
+      "location" : 3,
+      "match" : "^Set-Cookie:.*",
+      "replace" : "Set-Cookie: [...TRUNCATED...]",
+      "regex" : true,
+      "caseSensitive" : false,
+      "comment" : "Truncates all cookies."
+    }, {
+      "enabled" : true,
+      "location" : 4,
+      "match" : "^Server-.*",
+      "replace" : "",
+      "regex" : true,
+      "caseSensitive" : false,
+      "comment" : ""
+    }, {
+      "enabled" : true,
+      "location" : 4,
+      "match" : "Accept-CH",
+      "replace" : "",
+      "regex" : false,
+      "caseSensitive" : false,
+      "comment" : ""
+    }, {
+      "enabled" : true,
+      "location" : 4,
+      "match" : "^x-azure.*",
+      "replace" : "",
+      "regex" : true,
+      "caseSensitive" : false,
+      "comment" : ""
+    }, {
+      "enabled" : true,
+      "location" : 2,
+      "match" : "(Set\\-Cookie: \\[\\.\\.\\.TRUNCATED\\.\\.\\.\\]([\\r\\n]*))+",
+      "replace" : "Set-Cookie: [...TRUNCATED...]$2",
+      "regex" : true,
+      "caseSensitive" : false,
+      "comment" : "Remove duplicated Set-Cookie headers."
+    }, {
+      "enabled" : true,
+      "location" : 6,
+      "match" : "^(.{0,200}).*$",
+      "replace" : "$1[...TRUNCATED...]",
+      "regex" : true,
+      "caseSensitive" : false,
+      "comment" : "Truncate Long Responses"
+    } ]
+  }
+} ]
