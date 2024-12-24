@@ -1,5 +1,6 @@
 package com.whiteoaksecurity.copier.listeners;
 
+import com.whiteoaksecurity.copier.Persistor;
 import com.whiteoaksecurity.copier.Rule;
 import com.whiteoaksecurity.copier.models.RulesTableModel;
 import java.awt.Color;
@@ -108,6 +109,7 @@ public class AddEditRuleListener extends WindowAdapter implements ActionListener
 								commentField.getText()
 							);
 							model.add(this.rule);
+							Persistor.getPersistor().save();
 						}
 						case "Edit" -> {
 							this.rule.setLocation(locations.getSelectedIndex());
@@ -120,6 +122,7 @@ public class AddEditRuleListener extends WindowAdapter implements ActionListener
 							this.rule.setMatch(matchField.getText());
 
 							this.rule.setIsEnabled(enabled.isSelected());
+							Persistor.getPersistor().save();
 						}
 					}
 

@@ -10,6 +10,9 @@ import burp.api.montoya.ui.editor.extension.EditorMode;
 import burp.api.montoya.ui.editor.extension.ExtensionProvidedHttpRequestEditor;
 import com.whiteoaksecurity.copier.Copier;
 import com.whiteoaksecurity.copier.CopyProfile;
+import com.whiteoaksecurity.copier.GlobalCopyProfile;
+import com.whiteoaksecurity.copier.Logger;
+
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -30,13 +33,15 @@ import java.lang.Thread;
 public class CopyRequestEditor implements ExtensionProvidedHttpRequestEditor {
 	
 	private final MontoyaApi api;
+	private final GlobalCopyProfile globalProfile;
 	private final JComboBox<CopyProfile> profiles;
 	private final JTextArea requestEditor;
 	private HttpRequestResponse requestResponse;
 	private boolean includeURLBoolean = false;
 	
-	public CopyRequestEditor(MontoyaApi api, JComboBox<CopyProfile> profiles, EditorCreationContext creationContext) {
+	public CopyRequestEditor(MontoyaApi api, GlobalCopyProfile globalProfile, JComboBox<CopyProfile> profiles, EditorCreationContext creationContext) {
 		this.api = api;
+		this.globalProfile = globalProfile;
 		this.profiles = profiles;
 		this.requestEditor = new JTextArea();
 		this.requestEditor.setLineWrap(true);
@@ -110,7 +115,7 @@ public class CopyRequestEditor implements ExtensionProvidedHttpRequestEditor {
 			String response;
 			if (profileCombo.getSelectedItem() != null) {
 				response = new String(((CopyProfile) profileCombo.getSelectedItem())
-					.replace(this.requestResponse, false, true).response().toByteArray().getBytes(), StandardCharsets.UTF_8);
+					.replace(this.globalProfile.replace(this.requestResponse, false, true), false, true).response().toByteArray().getBytes(), StandardCharsets.UTF_8);
 			} else {
 				response = new String(this.requestResponse.response().toByteArray().getBytes(), StandardCharsets.UTF_8);
 			}
@@ -126,7 +131,7 @@ public class CopyRequestEditor implements ExtensionProvidedHttpRequestEditor {
 				String request;
 				if (profileCombo.getSelectedItem() != null) {
 					request = new String(((CopyProfile) profileCombo.getSelectedItem())
-						.replace(this.requestResponse, true, false).request().toByteArray().getBytes(), StandardCharsets.UTF_8);
+						.replace(this.globalProfile.replace(this.requestResponse, true, false), true, false).request().toByteArray().getBytes(), StandardCharsets.UTF_8);
 				} else {
 					request = new String(this.requestResponse.request().toByteArray().getBytes(), StandardCharsets.UTF_8);
 				}
@@ -145,7 +150,7 @@ public class CopyRequestEditor implements ExtensionProvidedHttpRequestEditor {
 				String request;
 				if (profileCombo.getSelectedItem() != null) {
 					request = new String(((CopyProfile) profileCombo.getSelectedItem())
-						.replace(this.requestResponse, true, false).request().toByteArray().getBytes(), StandardCharsets.UTF_8);
+						.replace(this.globalProfile.replace(this.requestResponse, true, false), true, false).request().toByteArray().getBytes(), StandardCharsets.UTF_8);
 				} else {
 					request = new String(this.requestResponse.request().toByteArray().getBytes(), StandardCharsets.UTF_8);
 				}

@@ -8,6 +8,8 @@ import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import com.whiteoaksecurity.copier.Copier;
 import com.whiteoaksecurity.copier.CopyProfile;
 import com.whiteoaksecurity.copier.Logger;
+import com.whiteoaksecurity.copier.Persistor;
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -102,10 +104,12 @@ public class AddEditProfileListener implements ActionListener {
 							this.profileCombo.setSelectedItem(cp);
 							Copier.resizeColumnWidth(requestTable);
 							Copier.resizeColumnWidth(responseTable);
+							Persistor.getPersistor().save();
 							break;
 						}
 						case "Edit" -> {
 							((CopyProfile) this.profileCombo.getSelectedItem()).setName(profileNameField.getText());
+							Persistor.getPersistor().save();
 							break;
 						}
 						case "Duplicate" -> {
@@ -119,6 +123,7 @@ public class AddEditProfileListener implements ActionListener {
 								this.profileCombo.setSelectedItem(dupe);
 								Copier.resizeColumnWidth(requestTable);
 								Copier.resizeColumnWidth(responseTable);
+								Persistor.getPersistor().save();
 							} catch (JsonProcessingException ex) {
 								Logger.getLogger().logToError(ex.getMessage());
 							} catch (IOException ex) {

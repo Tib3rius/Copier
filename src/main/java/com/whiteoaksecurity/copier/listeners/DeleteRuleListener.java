@@ -1,5 +1,6 @@
 package com.whiteoaksecurity.copier.listeners;
 
+import com.whiteoaksecurity.copier.Persistor;
 import com.whiteoaksecurity.copier.models.RulesTableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -46,6 +47,8 @@ public class DeleteRuleListener implements ActionListener  {
 				for (int i = this.table.getSelectedRows().length - 1; i >= 0; i--) {
 					((RulesTableModel) this.table.getModel()).getData().remove(this.table.getSelectedRows()[i]);
 				}
+
+				Persistor.getPersistor().save();
 				
 				((RulesTableModel) this.table.getModel()).fireTableDataChanged();
 				this.table.repaint();

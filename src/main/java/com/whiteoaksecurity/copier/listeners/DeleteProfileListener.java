@@ -1,6 +1,8 @@
 package com.whiteoaksecurity.copier.listeners;
 
 import com.whiteoaksecurity.copier.CopyProfile;
+import com.whiteoaksecurity.copier.Persistor;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JComboBox;
@@ -42,6 +44,8 @@ public class DeleteProfileListener implements ActionListener {
 				if (decision ==  1) {
 					this.profileCombo.removeItem(this.profileCombo.getSelectedItem());
 				}
+
+				Persistor.getPersistor().save();
 				
 				this.isDialogOpen = false;
 			}
