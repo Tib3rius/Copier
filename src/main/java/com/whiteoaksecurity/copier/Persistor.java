@@ -34,17 +34,6 @@ public class Persistor {
         this.profiles = profiles;
     }
 
-//    public void saveGlobalCopyProfile(CopyProfile globalProfile) {
-//        ObjectMapper objectMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
-//        objectMapper.registerModule(new ParameterNamesModule(JsonCreator.Mode.PROPERTIES));
-//        try {
-//            String json = objectMapper.writeValueAsString(globalProfile);
-//            this.api.persistence().preferences().setString("GlobalCopyProfile", json);
-//        } catch (JsonProcessingException ex) {
-//            this.api.logging().logToError(ex.getMessage());
-//        }
-//    }
-
     public void save() {
         ObjectMapper objectMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
         objectMapper.registerModule(new ParameterNamesModule(JsonCreator.Mode.PROPERTIES));

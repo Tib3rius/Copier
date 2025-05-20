@@ -1,5 +1,6 @@
 package com.whiteoaksecurity.copier;
 
+import burp.api.montoya.core.ByteArray;
 import burp.api.montoya.http.message.HttpHeader;
 import burp.api.montoya.http.message.HttpMessage;
 import burp.api.montoya.http.message.HttpRequestResponse;
@@ -13,6 +14,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.whiteoaksecurity.copier.models.RequestRulesTableModel;
 import com.whiteoaksecurity.copier.models.ResponseRulesTableModel;
 
+import javax.swing.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,7 +81,6 @@ public class GlobalCopyProfile {
 		ArrayList<HttpRequestResponse> modified = new ArrayList<>();
 
 		for (HttpRequestResponse httpRequestResponse : requestResponses) {
-
 			HttpRequest httpRequest = httpRequestResponse.request();
 			boolean isHTTP2 = false;
 			
@@ -84,44 +89,64 @@ public class GlobalCopyProfile {
 				isHTTP2 = true;
 				httpRequest = HttpRequest.httpRequest(httpRequest.toByteArray());
 			}
-			
-			Integer requestContentLength = null;
-			for (HttpHeader h : httpRequest.headers()) {
-				if (h.name().trim().equalsIgnoreCase("Content-Length")) {
-					try {
-						requestContentLength = Integer.parseInt(h.value().trim());
-					} catch (NumberFormatException e) {}
 
-					break;
-				}
+			Integer requestContentLength = null;
+			// hasHeader is case insensitive so this works.
+			if (httpRequest.hasHeader("Content-Length")) {
+				try {
+					requestContentLength = Integer.parseInt(httpRequest.headerValue("Content-Length").trim());
+				} catch (NumberFormatException e) {}
 			}
 
 			// HTTP/2 responses appear to get treated the same way as HTTP/1.1 by Burp.
 			HttpResponse httpResponse = httpRequestResponse.response();
 			
 			if (replaceRequest) {
+
+				// Temporarily store request body to speed up processing of non-body rules.
+				ByteArray originalRequestBody = httpRequest.body();
+
+				// Remove body from request.
+				httpRequest = httpRequest.withBody("");
+
+				BufferedReader br = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(httpRequest.toByteArray().getBytes())));
+
+				// Figure out what line break characters are being used.
+				String linebreak = "\n";
+				char[] linebreakChars = new char[2];
+				try {
+					br.read(linebreakChars, 0, 2);
+				} catch (IOException ex) {}
+
+				if (linebreakChars[0] == '\r' && linebreakChars[1] == '\n') {
+					linebreak = "\r\n";
+				}
+
 				for (Rule replacement : this.getRequestRulesTableModel().getData()) {
 					if (replacement.isEnabled()) {
 						try {
 							switch (replacement.getLocation()) {
 								// Entire Request
 								case 0 -> {
-									String entireRequest = httpRequest.toByteArray().toString();
+									String entireRequest = new String(httpRequest.withBody(originalRequestBody).toByteArray().getBytes(), StandardCharsets.UTF_8);
 									httpRequest = HttpRequest.httpRequest(httpRequest.httpService(), replacement.getPattern().matcher(entireRequest).replaceAll(replacement.getReplace()));
+
+									// Update stored request body
+									originalRequestBody = httpRequest.body();
+									httpRequest = httpRequest.withBody("");
+
 									break;
 								}
 								// Request Line
 								case 1 -> {
-									String[] entireRequestAsArray = httpRequest.toByteArray().toString().lines().toList().toArray(new String[0]);
+									String[] entireRequestAsArray = (new String(httpRequest.toByteArray().getBytes(), StandardCharsets.UTF_8)).lines().toList().toArray(new String[0]);
 									if (entireRequestAsArray.length > 0) {
 										entireRequestAsArray[0] = replacement.getPattern().matcher(entireRequestAsArray[0]).replaceAll(replacement.getReplace());
 									} else {
 										break;
 									}
+									httpRequest = HttpRequest.httpRequest(httpRequest.httpService(), String.join(linebreak, entireRequestAsArray));
 
-
-
-									httpRequest = HttpRequest.httpRequest(httpRequest.httpService(), String.join("\r\n", entireRequestAsArray));
 									break;
 								}
 								// Request URL Param
@@ -144,11 +169,10 @@ public class GlobalCopyProfile {
 										} else {
 											updatedParams.add(param);
 										}
-
-										// We have to remove each param individually and then add them back later for some reason.
-										httpRequest = httpRequest.withRemovedParameters(param);
 									}
-									httpRequest = httpRequest.withAddedParameters(updatedParams);
+
+									httpRequest = httpRequest.withRemovedParameters(params).withAddedParameters(updatedParams);
+
 									break;
 								}
 								// Request URL Param Name
@@ -165,11 +189,9 @@ public class GlobalCopyProfile {
 										} else {
 											updatedParams.add(param);
 										}
-
-										// We have to remove each param individually and then add them back later for some reason.
-										httpRequest = httpRequest.withRemovedParameters(param);
 									}
-									httpRequest = httpRequest.withAddedParameters(updatedParams);
+									httpRequest = httpRequest.withRemovedParameters(params).withAddedParameters(updatedParams);
+
 									break;
 								}
 								// Request URL Param Value
@@ -183,20 +205,14 @@ public class GlobalCopyProfile {
 										} else {
 											updatedParams.add(param);
 										}
-
-										// We have to remove each param individually and then add them back later for some reason.
-										httpRequest = httpRequest.withRemovedParameters(param);
 									}
-									httpRequest = httpRequest.withAddedParameters(updatedParams);
+									httpRequest = httpRequest.withRemovedParameters(params).withAddedParameters(updatedParams);
+
 									break;
 								}
 								// Request Headers
 								case 5 -> {
 									String headers = httpRequest.toByteArray().toString().substring(0, httpRequest.bodyOffset());
-									String linebreak = "\r\n";
-									if (!headers.contains(linebreak)) {
-										linebreak = "\n";
-									}
 									headers = replacement.getPattern().matcher(headers.strip() + linebreak).replaceAll(replacement.getReplace());
 									// Remove blank lines.
 									while (headers.contains("\r\n\r\n") || headers.contains("\n\n")) {
@@ -204,6 +220,7 @@ public class GlobalCopyProfile {
 									}
 									
 									httpRequest = HttpRequest.httpRequest(httpRequest.httpService(), headers + linebreak + httpRequest.bodyToString());
+
 									break;
 								}
 								// Request Header
@@ -221,14 +238,10 @@ public class GlobalCopyProfile {
 												updatedHeaders.add(header);
 											}
 										}
-
-										// We have to remove each header individually and then add them back later to preserve the order.
-										httpRequest = httpRequest.withRemovedHeader(header);
 									}
 
-									for (HttpHeader header : updatedHeaders) {
-										httpRequest = httpRequest.withAddedHeader(header);
-									}
+									httpRequest = httpRequest.withRemovedHeaders(headers).withAddedHeaders(updatedHeaders);
+
 									break;
 								}
 								// Request Header Name
@@ -246,14 +259,10 @@ public class GlobalCopyProfile {
 												updatedHeaders.add(header);
 											}
 										}
-
-										// We have to remove each header individually and then add them back later to preserve the order.
-										httpRequest = httpRequest.withRemovedHeader(header);
 									}
 
-									for (HttpHeader header : updatedHeaders) {
-										httpRequest = httpRequest.withAddedHeader(header);
-									}
+									httpRequest = httpRequest.withRemovedHeaders(headers).withAddedHeaders(updatedHeaders);
+
 									break;
 								}
 								// Request Header Value
@@ -268,107 +277,80 @@ public class GlobalCopyProfile {
 											httpRequest = httpRequest.withUpdatedHeader(header.name(), headerValueString);
 										}
 									}
+
 									break;
 								}
 								// Request Body
 								case 9 -> {
-									httpRequest = httpRequest.withBody(replacement.getPattern().matcher(httpRequest.bodyToString()).replaceAll(replacement.getReplace()));
-									// Since the Content-Length header gets updated automatically, we should reset it unless the user has
-									// specified otherwise.
-									if (!this.updateRequestContentLength && requestContentLength != null) {
-										httpRequest = httpRequest.withUpdatedHeader("Content-Length", requestContentLength.toString());
-									}
+									// In this case, we can just update the stored request body.
+									originalRequestBody = ByteArray.byteArray(replacement.getPattern().matcher(new String(originalRequestBody.getBytes(), StandardCharsets.UTF_8)).replaceAll(replacement.getReplace()).getBytes());
 									break;
 								}
 								// Request Body Params
 								case 10 -> {
-									String entireRequest = httpRequest.toByteArray().toString();
-									List<ParsedHttpParameter> params = httpRequest.parameters();
+									httpRequest = httpRequest.withBody(originalRequestBody);
+									String entireRequest = new String(httpRequest.toByteArray().getBytes(), StandardCharsets.UTF_8);
+									List<ParsedHttpParameter> params = httpRequest.parameters(HttpParameterType.BODY);
 									List<HttpParameter> updatedParams = new ArrayList<>();
+
 									for (ParsedHttpParameter param : params) {
-										// JSON parameters are incompatible, maybe XML is to? TODO: check
-										if (param.type().equals(HttpParameterType.JSON)) {
-											continue;
-										}
-										if (param.type().equals(HttpParameterType.BODY))
-										{
-											String paramString = replacement.getPattern().matcher(entireRequest.substring(param.nameOffsets().startIndexInclusive(), param.valueOffsets().endIndexExclusive())).replaceAll(replacement.getReplace());
-											// If param is now empty, we don't add it back to the request.
-											if (!paramString.isEmpty()) {
-												String[] keyValue = paramString.split("=", 2);
-												if (keyValue.length == 2) {
-													updatedParams.add(HttpParameter.bodyParameter(keyValue[0], keyValue[1]));
-												} else if (keyValue.length == 1) {
-													updatedParams.add(HttpParameter.bodyParameter(keyValue[0], ""));
-												}
+										String paramString = replacement.getPattern().matcher(entireRequest.substring(param.nameOffsets().startIndexInclusive(), param.valueOffsets().endIndexExclusive())).replaceAll(replacement.getReplace());
+										// If param is now empty, we don't add it back to the request.
+										if (!paramString.isEmpty()) {
+											String[] keyValue = paramString.split("=", 2);
+											if (keyValue.length == 2) {
+												updatedParams.add(HttpParameter.bodyParameter(keyValue[0], keyValue[1]));
+											} else if (keyValue.length == 1) {
+												updatedParams.add(HttpParameter.bodyParameter(keyValue[0], ""));
 											}
-										} else {
-											updatedParams.add(param);
 										}
-
-										// We have to remove each param individually and then add them back later for some reason.
-										httpRequest = httpRequest.withRemovedParameters(param);
 									}
 
-									httpRequest = httpRequest.withAddedParameters(updatedParams);
-									
-									// Since the Content-Length header gets updated automatically, we should reset it unless the user has
-									// specified otherwise.
-									if (!this.updateRequestContentLength && requestContentLength != null) {
-										httpRequest = httpRequest.withUpdatedHeader("Content-Length", requestContentLength.toString());
-									}
+									httpRequest = httpRequest.withRemovedParameters(params).withAddedParameters(updatedParams);
+
+									// Update Stored Request Body
+									originalRequestBody = httpRequest.body();
+									httpRequest = httpRequest.withBody("");
+
 									break;
 								}
 								// Request Body Param Name
 								case 11 -> {
-									List<ParsedHttpParameter> params = httpRequest.parameters();
+									httpRequest = httpRequest.withBody(originalRequestBody);
+									List<ParsedHttpParameter> params = httpRequest.parameters(HttpParameterType.BODY);
 									List<HttpParameter> updatedParams = new ArrayList<>();
 									for (ParsedHttpParameter param : params) {
-										if (param.type().equals(HttpParameterType.BODY)) {
-											String paramName = replacement.getPattern().matcher(param.name()).replaceAll(replacement.getReplace());
-											// If param name is now empty, we don't add it back to the request.
-											if (!paramName.isEmpty()) {
-												updatedParams.add(HttpParameter.bodyParameter(paramName, param.value()));
-											}
-										} else {
-											updatedParams.add(param);
+										String paramName = replacement.getPattern().matcher(param.name()).replaceAll(replacement.getReplace());
+										// If param name is now empty, we don't add it back to the request.
+										if (!paramName.isEmpty()) {
+											updatedParams.add(HttpParameter.bodyParameter(paramName, param.value()));
 										}
-
-										// We have to remove each param individually and then add them back later for some reason.
-										httpRequest = httpRequest.withRemovedParameters(param);
 									}
 
-									httpRequest = httpRequest.withAddedParameters(updatedParams);	
-									
-									// Since the Content-Length header gets updated automatically, we should reset it unless the user has
-									// specified otherwise.
-									if (!this.updateRequestContentLength && requestContentLength != null) {
-										httpRequest = httpRequest.withUpdatedHeader("Content-Length", requestContentLength.toString());
-									}
+									httpRequest = httpRequest.withRemovedParameters(params).withAddedParameters(updatedParams);
+
+									// Update Stored Request Body
+									originalRequestBody = httpRequest.body();
+									httpRequest = httpRequest.withBody("");
+
 									break;
 								}
 								// Request Body Param Value
 								case 12 -> {
-									List<ParsedHttpParameter> params = httpRequest.parameters();
+									httpRequest = httpRequest.withBody(originalRequestBody);
+									List<ParsedHttpParameter> params = httpRequest.parameters(HttpParameterType.BODY);
 									List<HttpParameter> updatedParams = new ArrayList<>();
 									for (ParsedHttpParameter param : params) {
-										if (param.type().equals(HttpParameterType.BODY)) {
-											String paramValue = replacement.getPattern().matcher(param.value()).replaceAll(replacement.getReplace());
-											updatedParams.add(HttpParameter.bodyParameter(param.name(), paramValue));
-										} else {
-											updatedParams.add(param);
-										}
+										String paramValue = replacement.getPattern().matcher(param.value()).replaceAll(replacement.getReplace());
+										updatedParams.add(HttpParameter.bodyParameter(param.name(), paramValue));
+									}
 
-										// We have to remove each param individually and then add them back later for some reason.
-										httpRequest = httpRequest.withRemovedParameters(param);
-									}
-									httpRequest = httpRequest.withAddedParameters(updatedParams);
-									
-									// Since the Content-Length header gets updated automatically, we should reset it unless the user has
-									// specified otherwise.
-									if (!this.updateRequestContentLength && requestContentLength != null) {
-										httpRequest = httpRequest.withUpdatedHeader("Content-Length", requestContentLength.toString());
-									}
+									httpRequest = httpRequest.withRemovedParameters(params).withAddedParameters(updatedParams);
+
+									// Update Stored Request Body
+									originalRequestBody = httpRequest.body();
+									httpRequest = httpRequest.withBody("");
+
 									break;
 								}
 
@@ -381,21 +363,33 @@ public class GlobalCopyProfile {
 						}
 					}
 				}
+
+				// Add back original request body.
+				httpRequest = httpRequest.withBody(originalRequestBody);
+
+				// Since the Content-Length header gets added/updated automatically, we should remove it if it never
+				// existed in the original request, or reset it to its original value unless the user has specified otherwise.
+				if (requestContentLength == null) {
+					httpRequest = httpRequest.withRemovedHeader("Content-Length");
+				} else if (!this.updateRequestContentLength) {
+					httpRequest = httpRequest.withUpdatedHeader("Content-Length", requestContentLength.toString());
+				}
 			}
 
 			// Sometimes (e.g. in a Repeater tab) there won't be a response.
 			if (replaceResponse && httpResponse != null) {
 
 				Integer responseContentLength = null;
-				for (HttpHeader h : httpResponse.headers()) {
-					if (h.name().trim().equalsIgnoreCase("Content-Length")) {
-						try {
-							responseContentLength = Integer.parseInt(h.value().trim());
-						} catch (NumberFormatException e) {}
-
-						break;
-					}
+				// hasHeader is case insensitive so this works.
+				if (httpResponse.hasHeader("Content-Length")) {
+					try {
+						responseContentLength = Integer.parseInt(httpResponse.headerValue("Content-Length").trim());
+					} catch (NumberFormatException e) {}
 				}
+
+				// Temporarily store response body
+				ByteArray originalResponseBody = httpResponse.body();
+				httpResponse = httpResponse.withBody("");
 
 				// Figure out what line breaks are used for headers.
 				String headersString = new String(httpResponse.toByteArray().getBytes(), StandardCharsets.UTF_8).substring(0, httpResponse.bodyOffset());
@@ -410,8 +404,12 @@ public class GlobalCopyProfile {
 							switch (replacement.getLocation()) {
 								// Entire Response
 								case 0 -> {
-									String entireResponse = new String(httpResponse.toByteArray().getBytes(), StandardCharsets.UTF_8);
+									String entireResponse = new String(httpResponse.withBody(originalResponseBody).toByteArray().getBytes(), StandardCharsets.UTF_8);
 									httpResponse = HttpResponse.httpResponse(replacement.getPattern().matcher(entireResponse).replaceAll(replacement.getReplace()));
+
+									originalResponseBody = httpResponse.body();
+									httpResponse = httpResponse.withBody("");
+
 									break;
 								}
 								// Response Status Line
@@ -422,7 +420,8 @@ public class GlobalCopyProfile {
 									} else {
 										break;
 									}
-									httpResponse = HttpResponse.httpResponse(String.join("\r\n", entireResponseAsArray));
+									httpResponse = HttpResponse.httpResponse(String.join(linebreak, entireResponseAsArray));
+
 									break;
 								}
 								// Response Headers
@@ -444,6 +443,7 @@ public class GlobalCopyProfile {
 									}
 
 									httpResponse = HttpResponse.httpResponse(statusLine + linebreak + updatedHeaders + linebreak + httpResponse.bodyToString());
+
 									break;
 								}
 								// Response Header
@@ -474,6 +474,7 @@ public class GlobalCopyProfile {
 									}
 
 									httpResponse = HttpResponse.httpResponse(statusLine + linebreak + sb.toString() + linebreak + httpResponse.bodyToString());
+
 									break;
 								}
 								// Response Header Name
@@ -504,6 +505,7 @@ public class GlobalCopyProfile {
 									}
 
 									httpResponse = HttpResponse.httpResponse(statusLine + linebreak + sb.toString() + linebreak + httpResponse.bodyToString());
+
 									break;
 								}
 								// Response Header Value
@@ -537,11 +539,8 @@ public class GlobalCopyProfile {
 								}
 								// Response Body
 								case 6 -> {
-									httpResponse = httpResponse.withBody(replacement.getPattern().matcher(httpResponse.bodyToString()).replaceAll(replacement.getReplace()));
-									
-									if (!this.updateResponseContentLength && responseContentLength != null) {
-										httpResponse = httpResponse.withUpdatedHeader("Content-Length", responseContentLength.toString());
-									}
+									originalResponseBody = ByteArray.byteArray(replacement.getPattern().matcher(new String(originalResponseBody.getBytes(), StandardCharsets.UTF_8)).replaceAll(replacement.getReplace()).getBytes());
+
 									break;
 								}
 
@@ -553,6 +552,17 @@ public class GlobalCopyProfile {
 							Logger.getLogger().logToError("Replacement: " + replacement.toString(responseRulesTableModel.getLocations()) + "\n");
 						}
 					}
+				}
+
+				// Add back original response body.
+				httpResponse = httpResponse.withBody(originalResponseBody);
+
+				// Since the Content-Length header gets added/updated automatically, we should remove it if it never
+				// existed in the original response, or reset it to its original value unless the user has specified otherwise.
+				if (responseContentLength == null) {
+					httpResponse = httpResponse.withRemovedHeader("Content-Length");
+				} else if (!this.updateResponseContentLength) {
+					httpResponse = httpResponse.withUpdatedHeader("Content-Length", responseContentLength.toString());
 				}
 			}
 			

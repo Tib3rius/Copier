@@ -1,4 +1,5 @@
 package com.whiteoaksecurity.copier.components;
+import com.whiteoaksecurity.copier.GlobalCopyProfile;
 import com.whiteoaksecurity.copier.listeners.CopyContentMenuListener;
 import burp.api.montoya.MontoyaApi;
 import burp.api.montoya.ui.contextmenu.ContextMenuEvent;
@@ -14,10 +15,12 @@ import javax.swing.JMenuItem;
 public class CopyContextMenu implements ContextMenuItemsProvider {
 	
 	private MontoyaApi api;
+	private GlobalCopyProfile globalProfile;
 	private JComboBox<CopyProfile> profiles;
 	
-	public CopyContextMenu(MontoyaApi api, JComboBox<CopyProfile> profiles) {
+	public CopyContextMenu(MontoyaApi api, GlobalCopyProfile globalProfile, JComboBox<CopyProfile> profiles) {
 		this.api = api;
+		this.globalProfile = globalProfile;
 		this.profiles = profiles;
 	}
 
@@ -38,19 +41,19 @@ public class CopyContextMenu implements ContextMenuItemsProvider {
 
 				if (numRequestRules > 0 || numResponseRules > 0) {
 					menuItem = new JMenuItem(this.profiles.getItemAt(i).getName());
-					menuItem.addActionListener(new CopyContentMenuListener(this.profiles.getItemAt(i), true, true, event));
+					menuItem.addActionListener(new CopyContentMenuListener(this.globalProfile, this.profiles.getItemAt(i), true, true, event));
 					copyRequestResponse.add(menuItem);
 				}
 
 				if (numRequestRules > 0) {
 					menuItem = new JMenuItem(this.profiles.getItemAt(i).getName());
-					menuItem.addActionListener(new CopyContentMenuListener(this.profiles.getItemAt(i), true, false, event));
+					menuItem.addActionListener(new CopyContentMenuListener(this.globalProfile, this.profiles.getItemAt(i), true, false, event));
 					copyRequest.add(menuItem);
 				}
 
 				if (numResponseRules > 0) {
 					menuItem = new JMenuItem(this.profiles.getItemAt(i).getName());
-					menuItem.addActionListener(new CopyContentMenuListener(this.profiles.getItemAt(i), false, true, event));
+					menuItem.addActionListener(new CopyContentMenuListener(this.globalProfile, this.profiles.getItemAt(i), false, true, event));
 					copyResponse.add(menuItem);
 				}
 			}

@@ -94,4 +94,9 @@ public class RulesTableModel extends AbstractTableModel {
 	public void add(Rule r) {
 		data.add(r);
 	}
+
+	public void clear() {
+		data.clear();
+		fireTableDataChanged();
+	}
 }

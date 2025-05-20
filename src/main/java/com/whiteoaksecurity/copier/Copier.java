@@ -40,6 +40,8 @@ import javax.swing.table.TableColumnModel;
 public class Copier implements BurpExtension {
 
 	GlobalCopyProfile globalProfile;
+	JTable globalRequestRulesTable;
+	JTable globalResponseRulesTable;
 	JComboBox<CopyProfile> profiles;
 	public final static Color FONT_COLOR = new Color(0xE58925);
 
@@ -112,11 +114,11 @@ public class Copier implements BurpExtension {
 		globalRequestRulesLabel.setFont(api.userInterface().currentDisplayFont().deriveFont(Font.BOLD));
 
 		RequestRulesTableModel globalRequestRulesTableModel = new RequestRulesTableModel();
-		JTable globalRequestRulesTable = new JTable(globalRequestRulesTableModel);
-		globalRequestRulesTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		this.globalRequestRulesTable = new JTable(globalRequestRulesTableModel);
+		this.globalRequestRulesTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
-		JScrollPane globalRequestRulesTableScrollPane = new JScrollPane(globalRequestRulesTable);
-		AddEditRuleListener globalRequestRuleListener = new AddEditRuleListener(parent, globalRequestRulesTable);
+		JScrollPane globalRequestRulesTableScrollPane = new JScrollPane(this.globalRequestRulesTable);
+		AddEditRuleListener globalRequestRuleListener = new AddEditRuleListener(parent, this.globalRequestRulesTable);
 
 		// Add Request Rule
 		JButton globalAddRequestRuleButton = new JButton("Add");
@@ -128,32 +130,32 @@ public class Copier implements BurpExtension {
 		globalEditRequestRuleButton.addActionListener(globalRequestRuleListener);
 
 		JButton globalDeleteRequestRuleButton = new JButton("Delete");
-		globalDeleteRequestRuleButton.addActionListener(new DeleteRuleListener(parent, globalRequestRulesTable));
+		globalDeleteRequestRuleButton.addActionListener(new DeleteRuleListener(parent, this.globalRequestRulesTable));
 
 		JButton globalUpRequestRuleButton = new JButton("Up");
 		globalUpRequestRuleButton.addActionListener((ActionEvent e) -> {
-			int selectedRow = globalRequestRulesTable.getSelectedRow();
+			int selectedRow = this.globalRequestRulesTable.getSelectedRow();
 			if (selectedRow > 0) {
 
-				RulesTableModel model = (RequestRulesTableModel) globalRequestRulesTable.getModel();
+				RulesTableModel model = (RequestRulesTableModel) this.globalRequestRulesTable.getModel();
 				Collections.swap(model.getData(), selectedRow, selectedRow - 1);
 				model.fireTableDataChanged();
-				globalRequestRulesTable.repaint();
-				globalRequestRulesTable.setRowSelectionInterval(selectedRow - 1, selectedRow - 1);
+				this.globalRequestRulesTable.repaint();
+				this.globalRequestRulesTable.setRowSelectionInterval(selectedRow - 1, selectedRow - 1);
 				Persistor.getPersistor().save();
 			}
 		});
 
 		JButton globalDownRequestRuleButton = new JButton("Down");
 		globalDownRequestRuleButton.addActionListener((ActionEvent e) -> {
-			int selectedRow = globalRequestRulesTable.getSelectedRow();
-			if (selectedRow > -1 && selectedRow < globalRequestRulesTable.getModel().getRowCount() - 1) {
+			int selectedRow = this.globalRequestRulesTable.getSelectedRow();
+			if (selectedRow > -1 && selectedRow < this.globalRequestRulesTable.getModel().getRowCount() - 1) {
 
-				RulesTableModel model = (RequestRulesTableModel) globalRequestRulesTable.getModel();
+				RulesTableModel model = (RequestRulesTableModel) this.globalRequestRulesTable.getModel();
 				Collections.swap(model.getData(), selectedRow, selectedRow + 1);
 				model.fireTableDataChanged();
-				globalRequestRulesTable.repaint();
-				globalRequestRulesTable.setRowSelectionInterval(selectedRow + 1, selectedRow + 1);
+				this.globalRequestRulesTable.repaint();
+				this.globalRequestRulesTable.setRowSelectionInterval(selectedRow + 1, selectedRow + 1);
 				Persistor.getPersistor().save();
 			}
 		});
@@ -165,11 +167,11 @@ public class Copier implements BurpExtension {
 		}));
 
 		ResponseRulesTableModel globalResponseRulesTableModel = new ResponseRulesTableModel();
-		JTable globalResponseRulesTable = new JTable(globalResponseRulesTableModel);
-		globalResponseRulesTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		this.globalResponseRulesTable = new JTable(globalResponseRulesTableModel);
+		this.globalResponseRulesTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
-		JScrollPane globalResponseRulesTableScrollPane = new JScrollPane(globalResponseRulesTable);
-		AddEditRuleListener globalResponseRuleListener = new AddEditRuleListener(parent, globalResponseRulesTable);
+		JScrollPane globalResponseRulesTableScrollPane = new JScrollPane(this.globalResponseRulesTable);
+		AddEditRuleListener globalResponseRuleListener = new AddEditRuleListener(parent, this.globalResponseRulesTable);
 
 		JLabel globalResponseRulesLabel = new JLabel("Response Copy Rules");
 		globalResponseRulesLabel.setFont(api.userInterface().currentDisplayFont().deriveFont(Font.BOLD));
@@ -183,32 +185,32 @@ public class Copier implements BurpExtension {
 		globalEditResponseRuleButton.addActionListener(globalResponseRuleListener);
 
 		JButton globalDeleteResponseRuleButton = new JButton("Delete");
-		globalDeleteResponseRuleButton.addActionListener(new DeleteRuleListener(parent, globalResponseRulesTable));
+		globalDeleteResponseRuleButton.addActionListener(new DeleteRuleListener(parent, this.globalResponseRulesTable));
 
 		JButton globalUpResponseRuleButton = new JButton("Up");
 		globalUpResponseRuleButton.addActionListener((ActionEvent e) -> {
-			int selectedRow = globalResponseRulesTable.getSelectedRow();
+			int selectedRow = this.globalResponseRulesTable.getSelectedRow();
 			if (selectedRow > 0) {
 
-				RulesTableModel model = (ResponseRulesTableModel) globalResponseRulesTable.getModel();
+				RulesTableModel model = (ResponseRulesTableModel) this.globalResponseRulesTable.getModel();
 				Collections.swap(model.getData(), selectedRow, selectedRow - 1);
 				model.fireTableDataChanged();
-				globalResponseRulesTable.repaint();
-				globalResponseRulesTable.setRowSelectionInterval(selectedRow - 1, selectedRow - 1);
+				this.globalResponseRulesTable.repaint();
+				this.globalResponseRulesTable.setRowSelectionInterval(selectedRow - 1, selectedRow - 1);
 				Persistor.getPersistor().save();
 			}
 		});
 
 		JButton globalDownResponseRuleButton = new JButton("Down");
 		globalDownResponseRuleButton.addActionListener((ActionEvent e) -> {
-			int selectedRow = globalResponseRulesTable.getSelectedRow();
-			if (selectedRow > -1 && selectedRow < globalResponseRulesTable.getModel().getRowCount() - 1) {
+			int selectedRow = this.globalResponseRulesTable.getSelectedRow();
+			if (selectedRow > -1 && selectedRow < this.globalResponseRulesTable.getModel().getRowCount() - 1) {
 
-				RulesTableModel model = (ResponseRulesTableModel) globalResponseRulesTable.getModel();
+				RulesTableModel model = (ResponseRulesTableModel) this.globalResponseRulesTable.getModel();
 				Collections.swap(model.getData(), selectedRow, selectedRow + 1);
 				model.fireTableDataChanged();
-				globalResponseRulesTable.repaint();
-				globalResponseRulesTable.setRowSelectionInterval(selectedRow + 1, selectedRow + 1);
+				this.globalResponseRulesTable.repaint();
+				this.globalResponseRulesTable.setRowSelectionInterval(selectedRow + 1, selectedRow + 1);
 				Persistor.getPersistor().save();
 			}
 		});
@@ -526,6 +528,8 @@ public class Copier implements BurpExtension {
 					JOptionPane.YES_NO_OPTION
 			);
 			if (answer == JOptionPane.YES_OPTION) {
+				((RequestRulesTableModel) this.globalRequestRulesTable.getModel()).clear();
+				((ResponseRulesTableModel) this.globalResponseRulesTable.getModel()).clear();
 				this.profiles.removeAllItems();
 				this.profiles.addItem(new CopyProfile("Default"));
 				// Set Request Table Column Widths
@@ -600,18 +604,18 @@ public class Copier implements BurpExtension {
 							this.globalProfile = objectMapper.convertValue(json.get("globalProfile"), new TypeReference<GlobalCopyProfile>() {
 							});
 
-							globalRequestRulesTable.setModel(this.globalProfile.getRequestRulesTableModel());
+							this.globalRequestRulesTable.setModel(this.globalProfile.getRequestRulesTableModel());
 							globalUpdateRequestContentLengthCheckBox.setSelected(this.globalProfile.getUpdateRequestContentLength());
-							globalResponseRulesTable.setModel(this.globalProfile.getResponseRulesTableModel());
+							this.globalResponseRulesTable.setModel(this.globalProfile.getResponseRulesTableModel());
 							globalUpdateResponseContentLengthCheckBox.setSelected(this.globalProfile.getUpdateResponseContentLength());
 
 							Persistor.getPersistor().setGlobalCopyProfile(this.globalProfile);
 
 							// Set Request Table Column Widths
-							resizeColumnWidth(globalRequestRulesTable);
+							resizeColumnWidth(this.globalRequestRulesTable);
 
 							// Set Response Table Column Widths
-							resizeColumnWidth(globalResponseRulesTable);
+							resizeColumnWidth(this.globalResponseRulesTable);
 						}
 
 						if (json.has("profiles")) {
@@ -637,6 +641,8 @@ public class Copier implements BurpExtension {
 						Logger.getLogger().logToOutput("Copier v1 Preferences Found");
 
 						List<CopyProfile> profileList = objectMapper.readValue(sb.toString(), new TypeReference<List<CopyProfile>>(){});
+						this.profiles.removeAllItems();
+
 						for (CopyProfile c : profileList) {
 							this.profiles.addItem(c);
 						}
@@ -707,14 +713,14 @@ public class Copier implements BurpExtension {
 		}
 
 		// Load Rules into Table
-		globalRequestRulesTable.setModel(this.globalProfile.getRequestRulesTableModel());
-		globalResponseRulesTable.setModel(this.globalProfile.getResponseRulesTableModel());
+		this.globalRequestRulesTable.setModel(this.globalProfile.getRequestRulesTableModel());
+		this.globalResponseRulesTable.setModel(this.globalProfile.getResponseRulesTableModel());
 
 		// Set Request Table Column Widths
-		resizeColumnWidth(globalRequestRulesTable);
+		resizeColumnWidth(this.globalRequestRulesTable);
 
 		// Set Response Table Column Widths
-		resizeColumnWidth(globalResponseRulesTable);
+		resizeColumnWidth(this.globalResponseRulesTable);
 
 		// Load Profiles From Saved Preferences
 		String preferenceProfiles = api.persistence().preferences().getString("CopyProfiles");
@@ -729,16 +735,16 @@ public class Copier implements BurpExtension {
 					if (json.has("globalProfile")) {
 						this.globalProfile = objectMapper.convertValue(json.get("globalProfile"), new TypeReference<GlobalCopyProfile>(){});
 
-						globalRequestRulesTable.setModel(this.globalProfile.getRequestRulesTableModel());
+						this.globalRequestRulesTable.setModel(this.globalProfile.getRequestRulesTableModel());
 						globalUpdateRequestContentLengthCheckBox.setSelected(this.globalProfile.getUpdateRequestContentLength());
-						globalResponseRulesTable.setModel(this.globalProfile.getResponseRulesTableModel());
+						this.globalResponseRulesTable.setModel(this.globalProfile.getResponseRulesTableModel());
 						globalUpdateResponseContentLengthCheckBox.setSelected(this.globalProfile.getUpdateResponseContentLength());
 
 						// Set Request Table Column Widths
-						resizeColumnWidth(globalRequestRulesTable);
+						resizeColumnWidth(this.globalRequestRulesTable);
 
 						// Set Response Table Column Widths
-						resizeColumnWidth(globalResponseRulesTable);
+						resizeColumnWidth(this.globalResponseRulesTable);
 					}
 
 					if (json.has("profiles")) {
@@ -792,7 +798,7 @@ public class Copier implements BurpExtension {
 		
 		api.userInterface().applyThemeToComponent(suiteTab);
 		api.userInterface().registerSuiteTab("Copier", suiteTab);
-		api.userInterface().registerContextMenuItemsProvider(new CopyContextMenu(api, this.profiles));
+		api.userInterface().registerContextMenuItemsProvider(new CopyContextMenu(api, this.globalProfile, this.profiles));
 		
 		api.userInterface().registerHttpRequestEditorProvider(new CopyRequestEditorProvider(api, this.globalProfile, this.profiles));
 		api.userInterface().registerHttpResponseEditorProvider(new CopyResponseEditorProvider(api, this.globalProfile, this.profiles));
