@@ -99,7 +99,8 @@
         "caseSensitive" : false,
         "comment" : "Remove duplicated Set-Cookie headers."
       } ]
-    }
+    },
+    "skipGlobalRules" : false
   }, {
     "name" : "Default - Except Cookies",
     "updateRequestContentLength" : false,
@@ -125,7 +126,8 @@
     },
     "responseRules" : {
       "data" : [ ]
-    }
+    },
+    "skipGlobalRules" : false
   }, {
     "name" : "Default - Truncate Response",
     "updateRequestContentLength" : false,
@@ -183,6 +185,7 @@
         "caseSensitive" : false,
         "comment" : "Truncate Long Responses"
       } ]
-    }
+    },
+    "skipGlobalRules" : false
   } ]
 }

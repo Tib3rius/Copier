@@ -9,14 +9,16 @@ import javax.swing.JComboBox;
 import javax.swing.JTable;
 
 public class ProfileComboActionListener implements ActionListener {
-	
+
+	private JCheckBox skipGlobalRulesCheckBox;
 	private JTable requestRulesTable;
 	private JCheckBox updateRequestContentLengthCheckBox;
 	private JTable responseRulesTable;
 	private JCheckBox updateResponseContentLengthCheckBox;
 
-	public ProfileComboActionListener(JTable requestRulesTable, JCheckBox updateRequestContentLengthCheckBox, JTable responseRulesTable, JCheckBox updateResponseContentLengthCheckBox)
+	public ProfileComboActionListener(JCheckBox skipGlobalRulesCheckBox, JTable requestRulesTable, JCheckBox updateRequestContentLengthCheckBox, JTable responseRulesTable, JCheckBox updateResponseContentLengthCheckBox)
 	{
+		this.skipGlobalRulesCheckBox = skipGlobalRulesCheckBox;
 		this.requestRulesTable = requestRulesTable;
 		this.responseRulesTable = responseRulesTable;
 		this.updateRequestContentLengthCheckBox = updateRequestContentLengthCheckBox;
@@ -28,6 +30,7 @@ public class ProfileComboActionListener implements ActionListener {
 		if ("comboBoxChanged".equals(event.getActionCommand())) {
 			CopyProfile profile = (CopyProfile)((JComboBox) event.getSource()).getSelectedItem();
 			if (profile != null) {
+				skipGlobalRulesCheckBox.setSelected(profile.getSkipGlobalRules());
 				requestRulesTable.setModel(profile.getRequestRulesTableModel());
 				updateRequestContentLengthCheckBox.setSelected(profile.getUpdateRequestContentLength());
 				responseRulesTable.setModel(profile.getResponseRulesTableModel());

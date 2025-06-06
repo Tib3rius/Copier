@@ -14,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.whiteoaksecurity.copier.models.RequestRulesTableModel;
 import com.whiteoaksecurity.copier.models.ResponseRulesTableModel;
 
-import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

@@ -52,6 +52,7 @@ public class CopyResponseEditor implements ExtensionProvidedHttpResponseEditor {
 
 	@Override
 	public void setRequestResponse(HttpRequestResponse requestResponse) {
+		this.lastRunProfile = null;
 		this.requestResponse = requestResponse;
 		this.responseEditor.setText(requestResponse.response().toByteArray().toString());
 	}
@@ -113,8 +114,10 @@ public class CopyResponseEditor implements ExtensionProvidedHttpResponseEditor {
 				CopyProfile tempProfile = new CopyProfile(selectedProfile.getName());
 				RequestRulesTableModel tempRequestRulesTableModel = (RequestRulesTableModel) tempProfile.getRequestRulesTableModel();
 
-				for (Rule replacement : globalProfile.getRequestRulesTableModel().getData()) {
-					tempRequestRulesTableModel.add(replacement);
+				if (!selectedProfile.getSkipGlobalRules()) {
+					for (Rule replacement : globalProfile.getRequestRulesTableModel().getData()) {
+						tempRequestRulesTableModel.add(replacement);
+					}
 				}
 
 				for (Rule replacement : selectedProfile.getRequestRulesTableModel().getData()) {
@@ -145,8 +148,10 @@ public class CopyResponseEditor implements ExtensionProvidedHttpResponseEditor {
 						CopyProfile tempProfile = new CopyProfile(selectedProfile.getName());
 						ResponseRulesTableModel tempResponseRulesTableModel = (ResponseRulesTableModel) tempProfile.getResponseRulesTableModel();
 
-						for (Rule replacement : globalProfile.getResponseRulesTableModel().getData()) {
-							tempResponseRulesTableModel.add(replacement);
+						if (!selectedProfile.getSkipGlobalRules()) {
+							for (Rule replacement : globalProfile.getResponseRulesTableModel().getData()) {
+								tempResponseRulesTableModel.add(replacement);
+							}
 						}
 
 						for (Rule replacement : selectedProfile.getResponseRulesTableModel().getData()) {
@@ -167,15 +172,15 @@ public class CopyResponseEditor implements ExtensionProvidedHttpResponseEditor {
 			});
 		});
 
+		// Run Response Copy Rules on UI Load.
 		if (this.requestResponse != null && profileCombo.getItemCount() > 0) {
-
 			SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
-					String response = null;
+					String response = responseEditor.getText();
 					if (profileCombo.getSelectedItem() != null) {
 						CopyProfile selectedProfile = (CopyProfile) profileCombo.getSelectedItem();
-						if (lastRunProfile == null && !lastRunProfile.equals(selectedProfile)) {
 
+						if (lastRunProfile == null || !lastRunProfile.equals(selectedProfile)) {
 							responseEditor.setText("Running Response Copy Rules...");
 							copyButton.setEnabled(false);
 							copyBothButton.setEnabled(false);
@@ -184,8 +189,10 @@ public class CopyResponseEditor implements ExtensionProvidedHttpResponseEditor {
 							CopyProfile tempProfile = new CopyProfile(selectedProfile.getName());
 							ResponseRulesTableModel tempResponseRulesTableModel = (ResponseRulesTableModel) tempProfile.getResponseRulesTableModel();
 
-							for (Rule replacement : globalProfile.getResponseRulesTableModel().getData()) {
-								tempResponseRulesTableModel.add(replacement);
+							if (!selectedProfile.getSkipGlobalRules()) {
+								for (Rule replacement : globalProfile.getResponseRulesTableModel().getData()) {
+									tempResponseRulesTableModel.add(replacement);
+								}
 							}
 
 							for (Rule replacement : selectedProfile.getResponseRulesTableModel().getData()) {
@@ -196,10 +203,6 @@ public class CopyResponseEditor implements ExtensionProvidedHttpResponseEditor {
 
 							lastRunProfile = selectedProfile;
 						}
-					}
-
-					if (response == null) {
-						response = new String(requestResponse.response().toByteArray().getBytes(), StandardCharsets.UTF_8);;
 					}
 
 					responseEditor.setText(response);

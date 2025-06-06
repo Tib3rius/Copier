@@ -29,8 +29,7 @@ public class CopyRequestEditor implements ExtensionProvidedHttpRequestEditor {
 	private final JTextArea requestEditor;
 	private HttpRequestResponse requestResponse;
 	private boolean includeURLBoolean = false;
-	private CopyProfile lastRunProfile = null;
-	
+
 	public CopyRequestEditor(MontoyaApi api, GlobalCopyProfile globalProfile, JComboBox<CopyProfile> profiles, EditorCreationContext creationContext) {
 		this.api = api;
 		this.globalProfile = globalProfile;
@@ -99,7 +98,7 @@ public class CopyRequestEditor implements ExtensionProvidedHttpRequestEditor {
 		
 		JButton copyButton = new JButton("Copy Request");
 		copyButton.addActionListener((ActionEvent e) -> {
-			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection((this.includeURLBoolean ? this.requestResponse.url() + "\n\n" : "") + this.requestEditor.getText()), null);
+			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection((this.includeURLBoolean ? this.requestResponse.request().url() + "\n\n" : "") + this.requestEditor.getText()), null);
 		});
 
 		JButton copyBothButton = new JButton("Copy Request + Response");
@@ -112,8 +111,10 @@ public class CopyRequestEditor implements ExtensionProvidedHttpRequestEditor {
 				CopyProfile tempProfile = new CopyProfile(selectedProfile.getName());
 				ResponseRulesTableModel tempResponseRulesTableModel = (ResponseRulesTableModel) tempProfile.getResponseRulesTableModel();
 
-				for (Rule replacement : globalProfile.getResponseRulesTableModel().getData()) {
-					tempResponseRulesTableModel.add(replacement);
+				if (!selectedProfile.getSkipGlobalRules()) {
+					for (Rule replacement : globalProfile.getResponseRulesTableModel().getData()) {
+						tempResponseRulesTableModel.add(replacement);
+					}
 				}
 
 				for (Rule replacement : selectedProfile.getResponseRulesTableModel().getData()) {
@@ -126,7 +127,7 @@ public class CopyRequestEditor implements ExtensionProvidedHttpRequestEditor {
 				response = new String(this.requestResponse.response().toByteArray().getBytes(), StandardCharsets.UTF_8);
 			}
 
-			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection((this.includeURLBoolean ? this.requestResponse.url() + "\n\n" : "") + this.requestEditor.getText() + (this.requestResponse.request().body().length() == 0 ? "" : "\n\n") + response), null);
+			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection((this.includeURLBoolean ? this.requestResponse.request().url() + "\n\n" : "") + this.requestEditor.getText() + (this.requestResponse.request().body().length() == 0 ? "" : "\n\n") + response), null);
 		});
 
 		profileCombo.addActionListener((ActionEvent e) -> {
@@ -144,8 +145,10 @@ public class CopyRequestEditor implements ExtensionProvidedHttpRequestEditor {
 						CopyProfile tempProfile = new CopyProfile(selectedProfile.getName());
 						RequestRulesTableModel tempRequestRulesTableModel = (RequestRulesTableModel) tempProfile.getRequestRulesTableModel();
 
-						for (Rule replacement : globalProfile.getRequestRulesTableModel().getData()) {
-							tempRequestRulesTableModel.add(replacement);
+						if (!selectedProfile.getSkipGlobalRules()) {
+							for (Rule replacement : globalProfile.getRequestRulesTableModel().getData()) {
+								tempRequestRulesTableModel.add(replacement);
+							}
 						}
 
 						for (Rule replacement : selectedProfile.getRequestRulesTableModel().getData()) {
@@ -153,11 +156,9 @@ public class CopyRequestEditor implements ExtensionProvidedHttpRequestEditor {
 						}
 
 						request = new String(tempProfile.replace(requestResponse, true, false).request().toByteArray().getBytes(), StandardCharsets.UTF_8);
-						lastRunProfile = selectedProfile;
 
 					} else {
 						request = new String(requestResponse.request().toByteArray().getBytes(), StandardCharsets.UTF_8);
-						lastRunProfile = null;
 					}
 					requestEditor.setText(request);
 					requestEditor.setCaretPosition(0);
@@ -167,68 +168,26 @@ public class CopyRequestEditor implements ExtensionProvidedHttpRequestEditor {
 			});
 		});
 
+		// Run Request Copy Rules on UI Load.
 		if (this.requestResponse != null && profileCombo.getItemCount() > 0) {
-
 			SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
-					String request = null;
+					String request = requestEditor.getText();;
 					if (profileCombo.getSelectedItem() != null) {
 						CopyProfile selectedProfile = (CopyProfile) profileCombo.getSelectedItem();
 
-						if (lastRunProfile == null && !lastRunProfile.equals(selectedProfile)) {
-
-							requestEditor.setText("Running Request Copy Rules...");
-							copyButton.setEnabled(false);
-							copyBothButton.setEnabled(false);
-
-							// To save processing time, we combine the Global Profile and Selected Profile into one.
-							CopyProfile tempProfile = new CopyProfile(selectedProfile.getName());
-							RequestRulesTableModel tempRequestRulesTableModel = (RequestRulesTableModel) tempProfile.getRequestRulesTableModel();
-
-							for (Rule replacement : globalProfile.getRequestRulesTableModel().getData()) {
-								tempRequestRulesTableModel.add(replacement);
-							}
-
-							for (Rule replacement : selectedProfile.getRequestRulesTableModel().getData()) {
-								tempRequestRulesTableModel.add(replacement);
-							}
-
-							request = new String(tempProfile.replace(requestResponse, true, false).request().toByteArray().getBytes(), StandardCharsets.UTF_8);
-
-							lastRunProfile = selectedProfile;
-						}
-
-					}
-
-					if (request == null) {
-						request = new String(requestResponse.request().toByteArray().getBytes(), StandardCharsets.UTF_8);
-					}
-
-					requestEditor.setText(request);
-					requestEditor.setCaretPosition(0);
-					copyButton.setEnabled(true);
-					copyBothButton.setEnabled(true);
-				}
-			});
-		}
-
-		if (this.requestResponse != null && profileCombo.getItemCount() > 0) {
-			this.requestEditor.setText("Running Request Copy Rules...");
-			copyButton.setEnabled(false);
-			copyBothButton.setEnabled(false);
-
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					String request;
-					if (profileCombo.getSelectedItem() != null) {
-						CopyProfile selectedProfile = (CopyProfile) profileCombo.getSelectedItem();
+						requestEditor.setText("Running Request Copy Rules...");
+						copyButton.setEnabled(false);
+						copyBothButton.setEnabled(false);
 
 						// To save processing time, we combine the Global Profile and Selected Profile into one.
 						CopyProfile tempProfile = new CopyProfile(selectedProfile.getName());
 						RequestRulesTableModel tempRequestRulesTableModel = (RequestRulesTableModel) tempProfile.getRequestRulesTableModel();
 
-						for (Rule replacement : globalProfile.getRequestRulesTableModel().getData()) {
-							tempRequestRulesTableModel.add(replacement);
+						if (!selectedProfile.getSkipGlobalRules()) {
+							for (Rule replacement : globalProfile.getRequestRulesTableModel().getData()) {
+								tempRequestRulesTableModel.add(replacement);
+							}
 						}
 
 						for (Rule replacement : selectedProfile.getRequestRulesTableModel().getData()) {
@@ -236,9 +195,8 @@ public class CopyRequestEditor implements ExtensionProvidedHttpRequestEditor {
 						}
 
 						request = new String(tempProfile.replace(requestResponse, true, false).request().toByteArray().getBytes(), StandardCharsets.UTF_8);
-					} else {
-						request = new String(requestResponse.request().toByteArray().getBytes(), StandardCharsets.UTF_8);
 					}
+
 					requestEditor.setText(request);
 					requestEditor.setCaretPosition(0);
 					copyButton.setEnabled(true);

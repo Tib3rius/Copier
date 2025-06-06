@@ -1,7 +1,9 @@
 package com.whiteoaksecurity.copier.models;
 
+import com.whiteoaksecurity.copier.GlobalCopyProfile;
+
 public class RequestRulesTableModel extends RulesTableModel {
-	
+
 	public RequestRulesTableModel() {
 		this.ruleType = "Request";
 		this.locations = new String[]{

@@ -311,6 +311,12 @@ public class Copier implements BurpExtension {
 		
 		JButton duplicateProfileButton = new JButton("Duplicate");
 		duplicateProfileButton.setActionCommand("Duplicate");
+
+		JCheckBox skipGlobalRulesCheckBox = new JCheckBox("Skip global rules when running this profile.", false);
+		skipGlobalRulesCheckBox.addActionListener(((ActionEvent e) -> {
+			((CopyProfile) this.profiles.getSelectedItem()).setSkipGlobalRules(skipGlobalRulesCheckBox.isSelected());
+			Persistor.getPersistor().save();
+		}));
 		
 		JLabel requestRulesLabel = new JLabel("Request Copy Rules");
 		requestRulesLabel.setFont(api.userInterface().currentDisplayFont().deriveFont(Font.BOLD));
@@ -428,7 +434,7 @@ public class Copier implements BurpExtension {
 		editProfileButton.addActionListener(profileListener);
 		duplicateProfileButton.addActionListener(profileListener);
 
-		this.profiles.addActionListener(new ProfileComboActionListener(requestRulesTable, updateRequestContentLengthCheckBox, responseRulesTable, updateResponseContentLengthCheckBox));
+		this.profiles.addActionListener(new ProfileComboActionListener(skipGlobalRulesCheckBox, requestRulesTable, updateRequestContentLengthCheckBox, responseRulesTable, updateResponseContentLengthCheckBox));
 		
 		profilesLayout.setHorizontalGroup(profilesLayout.createSequentialGroup()
 			.addGap(15)
@@ -441,6 +447,7 @@ public class Copier implements BurpExtension {
 					.addComponent(duplicateProfileButton)
 					.addComponent(deleteProfileButton)
 				)
+				.addComponent(skipGlobalRulesCheckBox)
 				.addComponent(requestRulesLabel)
 				.addGroup(profilesLayout.createSequentialGroup()
 					.addGroup(profilesLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
@@ -479,6 +486,8 @@ public class Copier implements BurpExtension {
 				.addComponent(duplicateProfileButton)
 				.addComponent(deleteProfileButton)
 			)
+			.addGap(15)
+			.addComponent(skipGlobalRulesCheckBox)
 			.addGap(15)
 			.addComponent(requestRulesLabel)
 			.addGap(10)
