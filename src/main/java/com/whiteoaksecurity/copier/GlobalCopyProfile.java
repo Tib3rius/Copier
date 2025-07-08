@@ -84,23 +84,23 @@ public class GlobalCopyProfile {
 			boolean isHTTP2 = false;
 			
 			// Convert HTTP/2 to HTTP/1.1 while performing match / replace rules.
-			if (httpRequest.httpVersion() != null && httpRequest.httpVersion().equals("HTTP/2")) {
+			if (httpRequest != null && httpRequest.httpVersion() != null && httpRequest.httpVersion().equals("HTTP/2")) {
 				isHTTP2 = true;
 				httpRequest = HttpRequest.httpRequest(httpRequest.toByteArray());
-			}
-
-			Integer requestContentLength = null;
-			// hasHeader is case insensitive so this works.
-			if (httpRequest.hasHeader("Content-Length")) {
-				try {
-					requestContentLength = Integer.parseInt(httpRequest.headerValue("Content-Length").trim());
-				} catch (NumberFormatException e) {}
 			}
 
 			// HTTP/2 responses appear to get treated the same way as HTTP/1.1 by Burp.
 			HttpResponse httpResponse = httpRequestResponse.response();
 			
-			if (replaceRequest) {
+			if (replaceRequest && httpRequest != null) {
+
+				Integer requestContentLength = null;
+				// hasHeader is case insensitive so this works.
+				if (httpRequest.hasHeader("Content-Length")) {
+					try {
+						requestContentLength = Integer.parseInt(httpRequest.headerValue("Content-Length").trim());
+					} catch (NumberFormatException e) {}
+				}
 
 				// Temporarily store request body to speed up processing of non-body rules.
 				ByteArray originalRequestBody = httpRequest.body();
