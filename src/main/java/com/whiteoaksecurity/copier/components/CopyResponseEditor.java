@@ -8,7 +8,6 @@ import burp.api.montoya.ui.Selection;
 import burp.api.montoya.ui.editor.EditorOptions;
 import burp.api.montoya.ui.editor.RawEditor;
 import burp.api.montoya.ui.editor.extension.EditorCreationContext;
-import burp.api.montoya.ui.editor.extension.EditorMode;
 import burp.api.montoya.ui.editor.extension.ExtensionProvidedHttpResponseEditor;
 import com.whiteoaksecurity.copier.*;
 import com.whiteoaksecurity.copier.models.RequestRulesTableModel;
