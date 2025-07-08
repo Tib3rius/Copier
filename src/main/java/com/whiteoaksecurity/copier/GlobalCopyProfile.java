@@ -89,18 +89,18 @@ public class GlobalCopyProfile {
 				httpRequest = HttpRequest.httpRequest(httpRequest.toByteArray());
 			}
 
-			Integer requestContentLength = null;
-			// hasHeader is case insensitive so this works.
-			if (httpRequest != null && httpRequest.hasHeader("Content-Length")) {
-				try {
-					requestContentLength = Integer.parseInt(httpRequest.headerValue("Content-Length").trim());
-				} catch (NumberFormatException e) {}
-			}
-
 			// HTTP/2 responses appear to get treated the same way as HTTP/1.1 by Burp.
 			HttpResponse httpResponse = httpRequestResponse.response();
 			
 			if (replaceRequest && httpRequest != null) {
+
+				Integer requestContentLength = null;
+				// hasHeader is case insensitive so this works.
+				if (httpRequest.hasHeader("Content-Length")) {
+					try {
+						requestContentLength = Integer.parseInt(httpRequest.headerValue("Content-Length").trim());
+					} catch (NumberFormatException e) {}
+				}
 
 				// Temporarily store request body to speed up processing of non-body rules.
 				ByteArray originalRequestBody = httpRequest.body();
